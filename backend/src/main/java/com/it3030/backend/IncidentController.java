@@ -3,6 +3,7 @@ package com.it3030.backend;
 import jakarta.validation.Valid;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -40,6 +41,13 @@ public class IncidentController {
         return ResponseEntity.ok(incidentService.getAllIncidents());
     }
 
+    @GetMapping("/my")
+    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
+    public ResponseEntity<List<Incident>> getMyIncidents(Authentication authentication) {
+        Long currentUserId = parseAuthenticatedUserId(authentication);
+        return ResponseEntity.ok(incidentService.getIncidentsByReportedUserId(currentUserId));
+    }
+
     @PutMapping("/{id}/assign")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Incident> assignTechnician(@PathVariable Long id,
@@ -73,7 +81,22 @@ public class IncidentController {
     }
 
     private Long parseAuthenticatedUserId(Authentication authentication) {
-        if (authentication == null || authentication.getName() == null) {
+        if (authentication == null) {
+            throw new IllegalArgumentException("Authenticated user is required.");
+        }
+
+        if (authentication.getPrincipal() instanceof OAuth2User oAuth2User) {
+            Object appUserId = oAuth2User.getAttribute("appUserId");
+            if (appUserId != null) {
+                try {
+                    return Long.valueOf(appUserId.toString());
+                } catch (NumberFormatException ex) {
+                    throw new IllegalArgumentException("Invalid authenticated user id.");
+                }
+            }
+        }
+
+        if (authentication.getName() == null) {
             throw new IllegalArgumentException("Authenticated user is required.");
         }
 

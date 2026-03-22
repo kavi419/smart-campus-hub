@@ -6,6 +6,7 @@ import UserBookings from './components/UserBookings'
 import AdminBookingLink from './components/AdminBookingLink'
 import IncidentForm from './components/IncidentForm'
 import IncidentList from './components/IncidentList'
+import MyIncidents from './components/MyIncidents'
 import IncidentDetail from './components/IncidentDetail'
 import NotificationPanel from './components/NotificationPanel'
 import './App.css'
@@ -73,6 +74,7 @@ function App() {
   }
 
   const isAdmin = authUser.role === 'ADMIN'
+  const isUser = authUser.role === 'USER'
 
   return (
     <div className="container py-4">
@@ -97,9 +99,16 @@ function App() {
         <p className="text-muted mb-0">Report issues, track status, and collaborate with comments.</p>
       </div>
 
-      <IncidentForm reporterUserId={authUser.id} onIncidentCreated={refreshIncidents} />
+      {isUser && <IncidentForm reporterUserId={authUser.id} onIncidentCreated={refreshIncidents} />}
       {isAdmin && (
         <IncidentList
+          refreshToken={incidentRefreshToken}
+          selectedIncidentId={selectedIncident?.id || null}
+          onSelectIncident={setSelectedIncident}
+        />
+      )}
+      {isUser && (
+        <MyIncidents
           refreshToken={incidentRefreshToken}
           selectedIncidentId={selectedIncident?.id || null}
           onSelectIncident={setSelectedIncident}

@@ -52,6 +52,11 @@ public class IncidentService {
         return incidentRepository.findAll(Sort.by(Sort.Direction.DESC, "createdAt"));
     }
 
+    @Transactional(readOnly = true)
+    public List<Incident> getIncidentsByReportedUserId(Long reportedBy) {
+        return incidentRepository.findByReportedByOrderByCreatedAtDesc(reportedBy);
+    }
+
     @Transactional
     public Incident assignTechnician(Long incidentId, Long technicianId) {
         Incident incident = getIncidentById(incidentId);
