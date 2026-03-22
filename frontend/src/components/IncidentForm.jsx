@@ -62,12 +62,7 @@ function IncidentForm({ reporterUserId, onIncidentCreated }) {
         attachments,
       }
 
-      const response = await axios.post('/api/incidents', payload, {
-        headers: {
-          'X-User-Id': String(reporterUserId),
-          'X-User-Role': 'USER',
-        },
-      })
+      const response = await axios.post('/api/incidents', payload)
 
       setSuccess(`Incident #${response.data.id} submitted successfully.`)
       setFormData(initialFormState)

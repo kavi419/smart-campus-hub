@@ -16,7 +16,7 @@ function formatDate(value) {
   return new Date(value).toLocaleString()
 }
 
-function IncidentList({ adminUserId, refreshToken, selectedIncidentId, onSelectIncident }) {
+function IncidentList({ refreshToken, selectedIncidentId, onSelectIncident }) {
   const [incidents, setIncidents] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -25,12 +25,7 @@ function IncidentList({ adminUserId, refreshToken, selectedIncidentId, onSelectI
     const loadIncidents = async () => {
       try {
         setLoading(true)
-        const response = await axios.get('/api/incidents', {
-          headers: {
-            'X-User-Id': String(adminUserId),
-            'X-User-Role': 'ADMIN',
-          },
-        })
+        const response = await axios.get('/api/incidents')
         setIncidents(response.data)
       } catch (err) {
         setError(err.response?.data?.message || err.message || 'Failed to load incidents.')
@@ -40,7 +35,7 @@ function IncidentList({ adminUserId, refreshToken, selectedIncidentId, onSelectI
     }
 
     loadIncidents()
-  }, [adminUserId, refreshToken])
+  }, [refreshToken])
 
   const selectedIncident = useMemo(
     () => incidents.find((incident) => incident.id === selectedIncidentId) || null,
@@ -58,7 +53,6 @@ function IncidentList({ adminUserId, refreshToken, selectedIncidentId, onSelectI
       <div className="card-body">
         <div className="d-flex justify-content-between align-items-center mb-3">
           <h2 className="h5 mb-0">Incident Dashboard</h2>
-          <span className="badge text-bg-info">Admin ID: {adminUserId}</span>
         </div>
 
         {error && <div className="alert alert-danger py-2">{error}</div>}

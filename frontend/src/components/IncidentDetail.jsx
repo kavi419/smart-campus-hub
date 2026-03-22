@@ -11,8 +11,8 @@ function formatDate(value) {
 
 function IncidentDetail({
   incident,
-  commentActor,
-  technicianUserId,
+  currentUser,
+  canUpdateIncident,
   onIncidentUpdated,
 }) {
   const [comments, setComments] = useState([])
@@ -36,19 +36,14 @@ function IncidentDetail({
     try {
       setLoadingComments(true)
       setError('')
-      const response = await axios.get(`/api/incidents/${incident.id}/comments`, {
-        headers: {
-          'X-User-Id': String(commentActor.id),
-          'X-User-Role': commentActor.role,
-        },
-      })
+      const response = await axios.get(`/api/incidents/${incident.id}/comments`)
       setComments(response.data)
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Failed to load comments.')
     } finally {
       setLoadingComments(false)
     }
-  }, [incident?.id, commentActor.id, commentActor.role])
+  }, [incident?.id])
 
   useEffect(() => {
     loadComments()
@@ -66,14 +61,8 @@ function IncidentDetail({
       await axios.post(
         `/api/incidents/${incident.id}/comments`,
         {
-          userId: Number(commentActor.id),
+          userId: Number(currentUser.id),
           message: commentMessage,
-        },
-        {
-          headers: {
-            'X-User-Id': String(commentActor.id),
-            'X-User-Role': commentActor.role,
-          },
         },
       )
       setCommentMessage('')
@@ -176,7 +165,7 @@ function IncidentDetail({
             <div className="d-flex justify-content-between align-items-center mb-3">
               <h3 className="h6 mb-0">Comment Section</h3>
               <span className="badge text-bg-secondary">
-                Actor: {commentActor.role} #{commentActor.id}
+                Logged in as: {currentUser.role} #{currentUser.id}
               </span>
             </div>
 
@@ -217,7 +206,7 @@ function IncidentDetail({
           </div>
         </div>
 
-        <TechnicianView incident={incident} technicianUserId={technicianUserId} onUpdated={onIncidentUpdated} />
+        {canUpdateIncident && <TechnicianView incident={incident} onUpdated={onIncidentUpdated} />}
       </div>
     </div>
   )

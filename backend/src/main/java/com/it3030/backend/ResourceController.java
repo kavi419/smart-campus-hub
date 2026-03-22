@@ -3,6 +3,7 @@ package com.it3030.backend;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -24,17 +25,20 @@ public class ResourceController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public ResponseEntity<List<Resource>> getAllResources() {
         return ResponseEntity.ok(resourceService.getAllResources());
     }
 
     @PostMapping
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Resource> createResource(@Valid @RequestBody Resource resource) {
         Resource created = resourceService.createResource(resource);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public ResponseEntity<Resource> getResourceById(@PathVariable Long id) {
         return resourceService.getResourceById(id)
             .map(ResponseEntity::ok)
@@ -42,6 +46,7 @@ public class ResourceController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteResource(@PathVariable Long id) {
         boolean deleted = resourceService.deleteResource(id);
         if (!deleted) {

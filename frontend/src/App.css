@@ -5,8 +5,47 @@
   background: #f8f9fa;
 }
 
-.comment-role-select {
-  max-width: 260px;
+.auth-card {
+  max-width: 460px;
+}
+
+.notification-bell-wrap {
+  position: relative;
+  display: inline-block;
+}
+
+.notification-dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  width: min(420px, 92vw);
+  z-index: 20;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+}
+
+.notification-bell-symbol {
+  font-size: 18px;
+}
+
+.notification-bell-icon {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+.notification-list {
+  max-height: 320px;
+  overflow-y: auto;
 }
 
 @media (max-width: 768px) {

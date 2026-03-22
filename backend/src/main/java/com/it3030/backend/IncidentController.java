@@ -29,7 +29,7 @@ public class IncidentController {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Incident> createIncident(@Valid @RequestBody IncidentCreateRequest request,
                                                    Authentication authentication) {
-        validateRequesterIdentity(authentication, request.getReportedBy());
+        request.setReportedBy(parseAuthenticatedUserId(authentication));
         Incident created = incidentService.createIncident(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(created);
     }
@@ -41,7 +41,7 @@ public class IncidentController {
     }
 
     @PutMapping("/{id}/assign")
-    @PreAuthorize("hasAnyRole('ADMIN','TECHNICIAN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Incident> assignTechnician(@PathVariable Long id,
                                                      @Valid @RequestBody IncidentAssignRequest request) {
         Incident updated = incidentService.assignTechnician(id, request.getAssignedTechnicianId());
@@ -49,7 +49,7 @@ public class IncidentController {
     }
 
     @PutMapping("/{id}/status")
-    @PreAuthorize("hasAnyRole('ADMIN','TECHNICIAN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Incident> updateStatus(@PathVariable Long id,
                                                  @Valid @RequestBody IncidentStatusUpdateRequest request) {
         Incident updated = incidentService.updateStatus(id, request);
@@ -57,35 +57,30 @@ public class IncidentController {
     }
 
     @GetMapping("/{id}/comments")
-    @PreAuthorize("hasAnyRole('USER','TECHNICIAN','ADMIN')")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public ResponseEntity<List<Comment>> getComments(@PathVariable Long id) {
         return ResponseEntity.ok(incidentService.getCommentsByIncidentId(id));
     }
 
     @PostMapping("/{id}/comments")
-    @PreAuthorize("hasAnyRole('USER','TECHNICIAN','ADMIN')")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public ResponseEntity<Comment> addComment(@PathVariable Long id,
                                               @Valid @RequestBody IncidentCommentCreateRequest request,
                                               Authentication authentication) {
-        validateRequesterIdentity(authentication, request.getUserId());
+        request.setUserId(parseAuthenticatedUserId(authentication));
         Comment comment = incidentService.addComment(id, request);
         return ResponseEntity.status(HttpStatus.CREATED).body(comment);
     }
 
-    private void validateRequesterIdentity(Authentication authentication, Long requestUserId) {
+    private Long parseAuthenticatedUserId(Authentication authentication) {
         if (authentication == null || authentication.getName() == null) {
             throw new IllegalArgumentException("Authenticated user is required.");
         }
 
-        Long authenticatedUserId;
         try {
-            authenticatedUserId = Long.valueOf(authentication.getName());
+            return Long.valueOf(authentication.getName());
         } catch (NumberFormatException ex) {
             throw new IllegalArgumentException("Invalid authenticated user id.");
-        }
-
-        if (!authenticatedUserId.equals(requestUserId)) {
-            throw new IllegalArgumentException("Authenticated user does not match request user id.");
         }
     }
 }

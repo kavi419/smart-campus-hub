@@ -16,9 +16,12 @@ public class BookingService {
     );
 
     private final BookingRepository bookingRepository;
+    private final NotificationService notificationService;
 
-    public BookingService(BookingRepository bookingRepository) {
+    public BookingService(BookingRepository bookingRepository,
+                          NotificationService notificationService) {
         this.bookingRepository = bookingRepository;
+        this.notificationService = notificationService;
     }
 
     @Transactional
@@ -79,7 +82,29 @@ public class BookingService {
             existing.setRejectionReason(null);
         }
 
-        return bookingRepository.save(existing);
+        Booking updated = bookingRepository.save(existing);
+
+        if (status == Booking.BookingStatus.APPROVED) {
+            notificationService.createNotification(
+                updated.getUserId(),
+                "Booking #" + updated.getId() + " has been APPROVED.",
+                Notification.NotificationType.BOOKING
+            );
+        }
+
+        if (status == Booking.BookingStatus.REJECTED) {
+            String reasonPart = updated.getRejectionReason() == null || updated.getRejectionReason().isBlank()
+                ? ""
+                : " Reason: " + updated.getRejectionReason();
+
+            notificationService.createNotification(
+                updated.getUserId(),
+                "Booking #" + updated.getId() + " has been REJECTED." + reasonPart,
+                Notification.NotificationType.BOOKING
+            );
+        }
+
+        return updated;
     }
 
     @Transactional(readOnly = true)

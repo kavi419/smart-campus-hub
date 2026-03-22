@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import axios from 'axios'
 
-function TechnicianView({ incident, technicianUserId, onUpdated }) {
+function TechnicianView({ incident, onUpdated }) {
   const [resolutionNotes, setResolutionNotes] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -24,12 +24,6 @@ function TechnicianView({ incident, technicianUserId, onUpdated }) {
           status: 'RESOLVED',
           resolutionNotes,
         },
-        {
-          headers: {
-            'X-User-Id': String(technicianUserId),
-            'X-User-Role': 'TECHNICIAN',
-          },
-        },
       )
 
       setSuccess('Incident marked as RESOLVED.')
@@ -46,8 +40,7 @@ function TechnicianView({ incident, technicianUserId, onUpdated }) {
     <div className="card shadow-sm">
       <div className="card-body">
         <div className="d-flex justify-content-between align-items-center mb-3">
-          <h3 className="h6 mb-0">Technician Panel</h3>
-          <span className="badge text-bg-warning">Technician ID: {technicianUserId}</span>
+          <h3 className="h6 mb-0">Admin Incident Action Panel</h3>
         </div>
 
         {error && <div className="alert alert-danger py-2">{error}</div>}

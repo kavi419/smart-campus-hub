@@ -6,7 +6,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class IncidentService {
@@ -15,11 +17,14 @@ public class IncidentService {
 
     private final IncidentRepository incidentRepository;
     private final CommentRepository commentRepository;
+    private final NotificationService notificationService;
 
     public IncidentService(IncidentRepository incidentRepository,
-                           CommentRepository commentRepository) {
+                           CommentRepository commentRepository,
+                           NotificationService notificationService) {
         this.incidentRepository = incidentRepository;
         this.commentRepository = commentRepository;
+        this.notificationService = notificationService;
     }
 
     @Transactional
@@ -67,6 +72,7 @@ public class IncidentService {
     @Transactional
     public Incident updateStatus(Long incidentId, IncidentStatusUpdateRequest request) {
         Incident incident = getIncidentById(incidentId);
+        Incident.IncidentStatus previousStatus = incident.getStatus();
 
         if (request.getStatus() == Incident.IncidentStatus.REJECTED
             && (request.getRejectionReason() == null || request.getRejectionReason().isBlank())) {
@@ -85,7 +91,16 @@ public class IncidentService {
             incident.setResolutionNotes(request.getResolutionNotes());
         }
 
-        return incidentRepository.save(incident);
+        Incident updated = incidentRepository.save(incident);
+
+        if (previousStatus != updated.getStatus()) {
+            notifyIncidentStakeholders(
+                updated,
+                "Incident #" + updated.getId() + " status updated to " + updated.getStatus() + "."
+            );
+        }
+
+        return updated;
     }
 
     @Transactional
@@ -101,7 +116,15 @@ public class IncidentService {
         comment.setUserId(request.getUserId());
         comment.setMessage(request.getMessage());
 
-        return commentRepository.save(comment);
+        Comment savedComment = commentRepository.save(comment);
+
+        notifyIncidentStakeholders(
+            incident,
+            "New comment added to Incident #" + incident.getId() + " by User #" + savedComment.getUserId() + ".",
+            savedComment.getUserId()
+        );
+
+        return savedComment;
     }
 
     @Transactional(readOnly = true)
@@ -131,5 +154,28 @@ public class IncidentService {
 
     private List<String> safeAttachments(List<String> attachments) {
         return attachments == null ? List.of() : attachments;
+    }
+
+    private void notifyIncidentStakeholders(Incident incident, String message, Long... excludedUserIds) {
+        Set<Long> recipients = new HashSet<>();
+        recipients.add(incident.getReportedBy());
+
+        if (incident.getAssignedTechnicianId() != null) {
+            recipients.add(incident.getAssignedTechnicianId());
+        }
+
+        if (excludedUserIds != null) {
+            for (Long excludedUserId : excludedUserIds) {
+                recipients.remove(excludedUserId);
+            }
+        }
+
+        for (Long recipient : recipients) {
+            notificationService.createNotification(
+                recipient,
+                message,
+                Notification.NotificationType.INCIDENT
+            );
+        }
     }
 }

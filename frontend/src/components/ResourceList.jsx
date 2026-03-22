@@ -10,7 +10,7 @@ const initialFormState = {
   metadata: '',
 }
 
-function ResourceList() {
+function ResourceList({ canManage = false }) {
   const [resources, setResources] = useState([])
   const [formData, setFormData] = useState(initialFormState)
   const [loading, setLoading] = useState(true)
@@ -75,45 +75,47 @@ function ResourceList() {
     <div className="container py-4">
       <h1 className="mb-4">Facilities & Assets</h1>
 
-      <div className="card mb-4 shadow-sm">
-        <div className="card-body">
-          <h2 className="h5 mb-3">Add New Resource</h2>
-          <form onSubmit={handleAddResource}>
-            <div className="row g-3">
-              <div className="col-md-4">
-                <label htmlFor="name" className="form-label">Name</label>
-                <input id="name" name="name" value={formData.name} onChange={handleInputChange} className="form-control" required />
+      {canManage && (
+        <div className="card mb-4 shadow-sm">
+          <div className="card-body">
+            <h2 className="h5 mb-3">Add New Resource</h2>
+            <form onSubmit={handleAddResource}>
+              <div className="row g-3">
+                <div className="col-md-4">
+                  <label htmlFor="name" className="form-label">Name</label>
+                  <input id="name" name="name" value={formData.name} onChange={handleInputChange} className="form-control" required />
+                </div>
+                <div className="col-md-4">
+                  <label htmlFor="type" className="form-label">Type</label>
+                  <input id="type" name="type" value={formData.type} onChange={handleInputChange} className="form-control" placeholder="Lab, Room..." required />
+                </div>
+                <div className="col-md-4">
+                  <label htmlFor="capacity" className="form-label">Capacity</label>
+                  <input id="capacity" name="capacity" type="number" min="1" value={formData.capacity} onChange={handleInputChange} className="form-control" required />
+                </div>
+                <div className="col-md-4">
+                  <label htmlFor="location" className="form-label">Location</label>
+                  <input id="location" name="location" value={formData.location} onChange={handleInputChange} className="form-control" required />
+                </div>
+                <div className="col-md-4">
+                  <label htmlFor="availabilityStatus" className="form-label">Status</label>
+                  <select id="availabilityStatus" name="availabilityStatus" value={formData.availabilityStatus} onChange={handleInputChange} className="form-select" required>
+                    <option value="ACTIVE">ACTIVE</option>
+                    <option value="OUT_OF_SERVICE">OUT_OF_SERVICE</option>
+                  </select>
+                </div>
+                <div className="col-md-4">
+                  <label htmlFor="metadata" className="form-label">Metadata</label>
+                  <input id="metadata" name="metadata" value={formData.metadata} onChange={handleInputChange} className="form-control" placeholder="Optional JSON or text" />
+                </div>
               </div>
-              <div className="col-md-4">
-                <label htmlFor="type" className="form-label">Type</label>
-                <input id="type" name="type" value={formData.type} onChange={handleInputChange} className="form-control" placeholder="Lab, Room..." required />
-              </div>
-              <div className="col-md-4">
-                <label htmlFor="capacity" className="form-label">Capacity</label>
-                <input id="capacity" name="capacity" type="number" min="1" value={formData.capacity} onChange={handleInputChange} className="form-control" required />
-              </div>
-              <div className="col-md-4">
-                <label htmlFor="location" className="form-label">Location</label>
-                <input id="location" name="location" value={formData.location} onChange={handleInputChange} className="form-control" required />
-              </div>
-              <div className="col-md-4">
-                <label htmlFor="availabilityStatus" className="form-label">Status</label>
-                <select id="availabilityStatus" name="availabilityStatus" value={formData.availabilityStatus} onChange={handleInputChange} className="form-select" required>
-                  <option value="ACTIVE">ACTIVE</option>
-                  <option value="OUT_OF_SERVICE">OUT_OF_SERVICE</option>
-                </select>
-              </div>
-              <div className="col-md-4">
-                <label htmlFor="metadata" className="form-label">Metadata</label>
-                <input id="metadata" name="metadata" value={formData.metadata} onChange={handleInputChange} className="form-control" placeholder="Optional JSON or text" />
-              </div>
-            </div>
-            <button type="submit" className="btn btn-primary mt-3" disabled={submitting}>
-              {submitting ? 'Adding...' : 'Add Resource'}
-            </button>
-          </form>
+              <button type="submit" className="btn btn-primary mt-3" disabled={submitting}>
+                {submitting ? 'Adding...' : 'Add Resource'}
+              </button>
+            </form>
+          </div>
         </div>
-      </div>
+      )}
 
       {error && <div className="alert alert-danger">{error}</div>}
 
@@ -153,9 +155,13 @@ function ResourceList() {
                         <td>{resource.availabilityStatus}</td>
                         <td>{resource.metadata || '-'}</td>
                         <td>
-                          <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => handleDeleteResource(resource.id)}>
-                            Delete
-                          </button>
+                          {canManage ? (
+                            <button type="button" className="btn btn-sm btn-outline-danger" onClick={() => handleDeleteResource(resource.id)}>
+                              Delete
+                            </button>
+                          ) : (
+                            <span className="text-muted">-</span>
+                          )}
                         </td>
                       </tr>
                     ))
