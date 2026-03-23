@@ -23,8 +23,14 @@ function App() {
   useEffect(() => {
     const loadSession = async () => {
       try {
-        const response = await axios.get('/api/auth/me')
-        setAuthUser(response.data)
+        const response = await axios.get('/api/auth/me', {
+          validateStatus: (status) => status < 500 // Treat 401/403 as valid responses, not errors
+        })
+        if (response.status === 200) {
+          setAuthUser(response.data)
+        } else {
+          setAuthUser(null)
+        }
       } catch {
         setAuthUser(null)
       } finally {
