@@ -1,19 +1,50 @@
 import { useEffect, useMemo, useState } from 'react'
 import axios from 'axios'
-
-const statusClassMap = {
-  OPEN: 'text-bg-danger',
-  IN_PROGRESS: 'text-bg-warning',
-  RESOLVED: 'text-bg-success',
-  CLOSED: 'text-bg-secondary',
-  REJECTED: 'text-bg-dark',
-}
+import { FolderOpen, Clock, CheckCircle, XCircle, AlertTriangle } from 'lucide-react'
 
 function formatDate(value) {
   if (!value) {
     return '-'
   }
-  return new Date(value).toLocaleString()
+  return new Date(value).toLocaleDateString() + ' ' + new Date(value).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})
+}
+
+const StatusBadge = ({ status }) => {
+  let colorClass = 'bg-secondary'
+  let Icon = AlertTriangle // Default icon
+  let text = status
+
+  switch (status) {
+    case 'OPEN':
+      colorClass = 'bg-sky-500/20 text-sky-300 border-sky-500/30'
+      Icon = FolderOpen
+      break
+    case 'IN_PROGRESS':
+      colorClass = 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+      Icon = Clock
+      break
+    case 'RESOLVED':
+      colorClass = 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
+      Icon = CheckCircle
+      break
+    case 'CLOSED':
+      colorClass = 'bg-gray-500/20 text-gray-300 border-gray-500/30'
+      Icon = CheckCircle
+      break
+    case 'REJECTED':
+      colorClass = 'bg-red-500/20 text-red-300 border-red-500/30'
+      Icon = XCircle
+      break
+    default:
+      break
+  }
+
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium border ${colorClass}`}>
+      <Icon size={14} />
+      {text}
+    </span>
+  )
 }
 
 function IncidentList({ refreshToken, selectedIncidentId, onSelectIncident }) {
@@ -49,54 +80,51 @@ function IncidentList({ refreshToken, selectedIncidentId, onSelectIncident }) {
   }, [selectedIncident, onSelectIncident])
 
   return (
-    <div className="card shadow-sm mb-4">
-      <div className="card-body">
-        <div className="d-flex justify-content-between align-items-center mb-3">
-          <h2 className="h5 mb-0">Incident Dashboard</h2>
-        </div>
+    <div className="h-100">
+      <div className="d-flex justify-content-between align-items-center mb-4 pt-2">
+        <h2 className="h5 mb-0 text-white">Incident Dashboard</h2>
+      </div>
 
         {error && <div className="alert alert-danger py-2">{error}</div>}
 
         {loading ? (
-          <p className="mb-0">Loading incidents...</p>
+          <p className="mb-0 text-white-50">Loading incidents...</p>
         ) : (
           <div className="table-responsive">
-            <table className="table table-hover align-middle mb-0">
-              <thead className="table-light">
+            <table className="table table-dark table-hover table-sm align-middle mb-0" style={{ background: 'transparent', '--bs-table-bg': 'transparent' }}>
+              <thead>
                 <tr>
-                  <th>ID</th>
-                  <th>Category</th>
-                  <th>Location</th>
-                  <th>Priority</th>
-                  <th>Status</th>
-                  <th>Technician</th>
-                  <th>Created</th>
-                  <th>Action</th>
+                  <th className="text-white-50 fw-normal border-secondary">ID</th>
+                  <th className="text-white-50 fw-normal border-secondary">Category</th>
+                  <th className="text-white-50 fw-normal border-secondary">Location</th>
+                  <th className="text-white-50 fw-normal border-secondary">Priority</th>
+                  <th className="text-white-50 fw-normal border-secondary">Status</th>
+                  <th className="text-white-50 fw-normal border-secondary">Technician</th>
+                  <th className="text-white-50 fw-normal border-secondary">Created</th>
+                  <th className="text-white-50 fw-normal border-secondary">Action</th>
                 </tr>
               </thead>
               <tbody>
                 {incidents.length === 0 ? (
                   <tr>
-                    <td colSpan="8" className="text-center text-muted">No incidents found.</td>
+                    <td colSpan="8" className="text-center text-muted py-4">No incidents found.</td>
                   </tr>
                 ) : (
                   incidents.map((incident) => (
-                    <tr key={incident.id} className={selectedIncidentId === incident.id ? 'table-primary' : ''}>
-                      <td>{incident.id}</td>
-                      <td>{incident.category}</td>
-                      <td>{incident.location}</td>
-                      <td>{incident.priority}</td>
+                    <tr key={incident.id} className={selectedIncidentId === incident.id ? 'table-active' : ''}>
+                      <td className="text-white">{incident.id}</td>
+                      <td className="text-white">{incident.category}</td>
+                      <td className="text-white">{incident.location}</td>
+                      <td className="text-white">{incident.priority}</td>
                       <td>
-                        <span className={`badge ${statusClassMap[incident.status] || 'text-bg-secondary'}`}>
-                          {incident.status}
-                        </span>
+                        <StatusBadge status={incident.status} />
                       </td>
-                      <td>{incident.assignedTechnicianId || '-'}</td>
-                      <td>{formatDate(incident.createdAt)}</td>
+                      <td className="text-white-50 small">{incident.assignedTechnicianId || '-'}</td>
+                      <td className="text-white-50 small">{formatDate(incident.createdAt)}</td>
                       <td>
                         <button
                           type="button"
-                          className="btn btn-sm btn-outline-primary"
+                          className="btn btn-sm btn-outline-light"
                           onClick={() => onSelectIncident?.(incident)}
                         >
                           View
@@ -109,13 +137,6 @@ function IncidentList({ refreshToken, selectedIncidentId, onSelectIncident }) {
             </table>
           </div>
         )}
-
-        {selectedIncident && (
-          <div className="alert alert-light border mt-3 mb-0">
-            Selected Incident #{selectedIncident.id}: {selectedIncident.category} at {selectedIncident.location}
-          </div>
-        )}
-      </div>
     </div>
   )
 }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import axios from 'axios'
+import MainLayout from './components/MainLayout'
 import ResourceList from './components/ResourceList'
 import BookingForm from './components/BookingForm'
 import UserBookings from './components/UserBookings'
@@ -60,20 +61,18 @@ function App() {
   }
 
   if (authLoading) {
-    return <div className="container py-5">Checking session...</div>
+    return <div className="container py-5 text-white">Checking session...</div>
   }
 
   if (!authUser) {
     return (
-      <div className="container py-5">
-        <div className="card shadow-sm mx-auto auth-card">
-          <div className="card-body p-4">
-            <h1 className="h4 mb-3">Smart Campus Operations Hub</h1>
-            <p className="text-muted mb-4">Login to access campus resources, bookings, incidents, and notifications.</p>
-            <button type="button" className="btn btn-primary" onClick={handleGoogleLogin}>
+      <div className="d-flex align-items-center justify-content-center min-vh-100">
+        <div className="glass-card p-5 text-center" style={{ maxWidth: '400px', width: '100%' }}>
+            <h1 className="h3 mb-3 text-white">Smart Campus Hub</h1>
+            <p className="text-secondary mb-4">Login to access campus resources, bookings, incidents, and notifications.</p>
+            <button type="button" className="btn btn-primary w-100" onClick={handleGoogleLogin}>
               Login with Google
             </button>
-          </div>
         </div>
       </div>
     )
@@ -83,51 +82,69 @@ function App() {
   const isUser = authUser.role === 'USER'
 
   return (
-    <div className="container py-4">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h1 className="mb-0">Smart Campus Operations Hub</h1>
-        <div className="d-flex align-items-center gap-2">
-          <span className="badge text-bg-dark">{authUser.role}</span>
-          <button type="button" className="btn btn-sm btn-outline-secondary" onClick={handleLogout}>Logout</button>
+    <MainLayout authUser={authUser} onLogout={handleLogout}>
+      <div className="dashboard-grid">
+        
+        {/* Notifications Section */}
+        <div className="mb-4">
+           {/* Passing styles via className or wrapping not handled by component yet, standard render */}
+           <NotificationPanel userId={authUser.id} role={authUser.role} />
+        </div>
+
+        {/* Action Cards Grid */}
+        <div className="row g-4 mb-4">
+          <div className="col-md-6">
+             <div className="glass-card h-100">
+                <BookingForm userId={authUser.id} onBookingCreated={refreshBookings} />
+             </div>
+          </div>
+          
+          <div className="col-md-6">
+             {/* Incidents are complex, might need refactoring later to fit glassmorphism better */}
+             <div className="glass-card h-100">
+                 {selectedIncident ? (
+                   <div>
+                     <button className="btn btn-sm btn-outline-light mb-3" onClick={() => setSelectedIncident(null)}>← Back to List</button>
+                     <IncidentDetail incident={selectedIncident} currentUserId={authUser.id} isAdmin={isAdmin} onBack={() => setSelectedIncident(null)} onUpdate={refreshIncidents} />
+                   </div>
+                 ) : (
+                   <IncidentList 
+                      currentUserId={authUser.id} 
+                      isAdmin={isAdmin} 
+                      refreshToken={incidentRefreshToken}
+                      onSelectIncident={setSelectedIncident} 
+                   />
+                 )}
+             </div>
+          </div>
+        </div>
+
+        {/* Lists Grid */}
+        <div className="row g-4">
+           <div className="col-12">
+              <div className="glass-card">
+                 <h3 className="h5 mb-3 text-white">Campus Resources</h3>
+                 <ResourceList canManage={isAdmin} />
+              </div>
+           </div>
+           
+           <div className="col-12">
+               <div className="glass-card">
+                 <UserBookings userId={authUser.id} refreshToken={bookingRefreshToken} />
+               </div>
+           </div>
+
+           {isAdmin && (
+             <div className="col-12">
+                <div className="glass-card">
+                   <h3 className="h5 mb-3 text-white">Admin Booking Management</h3>
+                   <AdminBookingLink refreshToken={bookingRefreshToken} onStatusUpdated={refreshBookings} />
+                </div>
+             </div>
+           )}
         </div>
       </div>
-
-      <NotificationPanel userId={authUser.id} role={authUser.role} />
-
-      <ResourceList canManage={isAdmin} />
-      <BookingForm userId={authUser.id} onBookingCreated={refreshBookings} />
-      <UserBookings userId={authUser.id} refreshToken={bookingRefreshToken} />
-      {isAdmin && <AdminBookingLink refreshToken={bookingRefreshToken} onStatusUpdated={refreshBookings} />}
-
-      <hr className="my-5" />
-      <div className="mb-4">
-        <h2 className="h4 mb-1">Module C: Maintenance & Incident Ticketing</h2>
-        <p className="text-muted mb-0">Report issues, track status, and collaborate with comments.</p>
-      </div>
-
-      {isUser && <IncidentForm reporterUserId={authUser.id} onIncidentCreated={refreshIncidents} />}
-      {isAdmin && (
-        <IncidentList
-          refreshToken={incidentRefreshToken}
-          selectedIncidentId={selectedIncident?.id || null}
-          onSelectIncident={setSelectedIncident}
-        />
-      )}
-      {isUser && (
-        <MyIncidents
-          refreshToken={incidentRefreshToken}
-          selectedIncidentId={selectedIncident?.id || null}
-          onSelectIncident={setSelectedIncident}
-        />
-      )}
-
-      <IncidentDetail
-        incident={selectedIncident}
-        currentUser={authUser}
-        canUpdateIncident={isAdmin}
-        onIncidentUpdated={refreshIncidents}
-      />
-    </div>
+    </MainLayout>
   )
 }
 
