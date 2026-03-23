@@ -13,6 +13,7 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import java.util.Arrays;
 
@@ -22,13 +23,16 @@ import java.util.Arrays;
 public class SecurityConfig {
 
     private final CustomOAuth2UserService customOAuth2UserService;
+    private final CustomOidcUserService customOidcUserService;
     private final String frontendSuccessUrl;
     private final String allowedOrigins;
 
     public SecurityConfig(CustomOAuth2UserService customOAuth2UserService,
-                          @Value("${app.oauth2.frontend-success-url:http://localhost:5173}") String frontendSuccessUrl,
+                          CustomOidcUserService customOidcUserService,
+                          @Value("${app.oauth2.frontend-success-url:http://localhost:5173/}") String frontendSuccessUrl,
                           @Value("${app.cors.allowed-origins:http://localhost:5173}") String allowedOrigins) {
         this.customOAuth2UserService = customOAuth2UserService;
+        this.customOidcUserService = customOidcUserService;
         this.frontendSuccessUrl = frontendSuccessUrl;
         this.allowedOrigins = allowedOrigins;
     }
@@ -41,11 +45,15 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/api/hello").permitAll()
                 .requestMatchers("/oauth2/**", "/login/**", "/error").permitAll()
+                .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/**").authenticated()
                 .anyRequest().authenticated()
             )
             .oauth2Login(oauth2 -> oauth2
-                .userInfoEndpoint(userInfo -> userInfo.userService(customOAuth2UserService))
+                .userInfoEndpoint(userInfo -> userInfo
+                    .userService(customOAuth2UserService)
+                    .oidcUserService(customOidcUserService)
+                )
                 .defaultSuccessUrl(frontendSuccessUrl, true)
             )
             .logout(logout -> logout
@@ -60,6 +68,9 @@ public class SecurityConfig {
                     new AntPathRequestMatcher("/api/**")
                 )
             );
+
+        // Add debug filter
+        http.addFilterBefore(new DebugAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

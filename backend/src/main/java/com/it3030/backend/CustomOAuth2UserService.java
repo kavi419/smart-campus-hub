@@ -37,9 +37,13 @@ public class CustomOAuth2UserService implements OAuth2UserService<OAuth2UserRequ
     @Override
     public OAuth2User loadUser(OAuth2UserRequest userRequest) throws OAuth2AuthenticationException {
         OAuth2User oauth2User = delegate.loadUser(userRequest);
+        System.out.println("OAuth2 User Attributes: " + oauth2User.getAttributes());
 
         String googleSub = oauth2User.getAttribute("sub");
         String email = oauth2User.getAttribute("email");
+        if (email == null || email.isBlank()) {
+            email = oauth2User.getAttribute("preferred_username");
+        }
         String name = oauth2User.getAttribute("name");
 
         if (googleSub == null || googleSub.isBlank()) {

@@ -27,7 +27,6 @@ public class IncidentController {
     }
 
     @PostMapping
-    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Incident> createIncident(@Valid @RequestBody IncidentCreateRequest request,
                                                    Authentication authentication) {
         request.setReportedBy(parseAuthenticatedUserId(authentication));
@@ -36,20 +35,17 @@ public class IncidentController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<Incident>> getAllIncidents() {
         return ResponseEntity.ok(incidentService.getAllIncidents());
     }
 
     @GetMapping("/my")
-    @PreAuthorize("hasRole('USER') or hasRole('ADMIN')")
     public ResponseEntity<List<Incident>> getMyIncidents(Authentication authentication) {
         Long currentUserId = parseAuthenticatedUserId(authentication);
         return ResponseEntity.ok(incidentService.getIncidentsByReportedUserId(currentUserId));
     }
 
     @PutMapping("/{id}/assign")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Incident> assignTechnician(@PathVariable Long id,
                                                      @Valid @RequestBody IncidentAssignRequest request) {
         Incident updated = incidentService.assignTechnician(id, request.getAssignedTechnicianId());
@@ -57,7 +53,6 @@ public class IncidentController {
     }
 
     @PutMapping("/{id}/status")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Incident> updateStatus(@PathVariable Long id,
                                                  @Valid @RequestBody IncidentStatusUpdateRequest request) {
         Incident updated = incidentService.updateStatus(id, request);
@@ -65,13 +60,11 @@ public class IncidentController {
     }
 
     @GetMapping("/{id}/comments")
-    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public ResponseEntity<List<Comment>> getComments(@PathVariable Long id) {
         return ResponseEntity.ok(incidentService.getCommentsByIncidentId(id));
     }
 
     @PostMapping("/{id}/comments")
-    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public ResponseEntity<Comment> addComment(@PathVariable Long id,
                                               @Valid @RequestBody IncidentCommentCreateRequest request,
                                               Authentication authentication) {
